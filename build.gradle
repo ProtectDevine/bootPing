@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.javamodularity.moduleplugin' version '1.8.12'
+    id 'org.openjfx.javafxplugin' version '0.0.9'
+    id 'org.beryx.jlink' version '2.24.4'
+}
+
+group = 'com.boot.ping'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.openjfx:javafx-controls:20'
+    implementation 'org.openjfx:javafx-fxml:20'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+javafx {
+    version = "17.0.14"
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+application {
+    // mainClassName 대신 mainClass 사용
+    mainModule = 'com.boot.ping'
+    mainClass = 'com.boot.ping.Main'
+}
+
+
+test {
+    useJUnitPlatform()
+}
+
+jlink {
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    launcher {
+        name = 'helloFx'
+    }
+}
+
+java {
+    modularity.inferModulePath = true
+}
+
+tasks.named('run') {
+    jvmArgs = [
+            '--module-path', 'C:/javafx-sdk-17.0.14/lib',
+            '--add-modules', 'javafx.controls,javafx.fxml'
+    ]
+}
+
+
