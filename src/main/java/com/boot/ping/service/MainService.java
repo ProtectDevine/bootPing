@@ -17,7 +17,7 @@ public class MainService {
         boolean isConnect = target.isReachable(1000);
         List<Long> startPings = new ArrayList<>();
         List<Long> endPings = new ArrayList<>();
-        String responseMessage = null;
+        String responseMessage = "";
 
         if (isConnect) {
 
@@ -33,7 +33,7 @@ public class MainService {
             List<Long> averagePings =
                     LongStream.range(0, endPings.size())
                             .mapToObj(k -> endPings.get((int) k) - startPings.get((int) k))
-                            .collect(Collectors.toList());
+                            .toList();
 
             Long average = (long) averagePings.stream().mapToLong(Long::longValue).average().orElse(0);
 
