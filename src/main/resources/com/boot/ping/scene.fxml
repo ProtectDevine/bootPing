@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.Button?>
 
-
-<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"
-           xmlns="http://javafx.com/javafx/17.0.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.boot.ping.MainController">
-    <children>
-        <Label fx:id="label" text="Label" />
-    </children>
-</StackPane>
-
+<AnchorPane prefHeight="386.0" prefWidth="364.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="com.boot.ping.MainController">
+   <children>
+       <Label fx:id="label" layoutX="100" layoutY="100" />
+       <Button fx:id="pingCheck" layoutX="29.0" layoutY="48.0" onAction="#pingCheck" text="Ping 체크" />
+   </children>
+</AnchorPane>
