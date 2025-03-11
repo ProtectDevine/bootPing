@@ -70,9 +70,8 @@ public class MainService {
 
             // TCPNoDelay 확인
             int tcpNoDelay = checkRegistryValue(networkPath, "TCPNoDelay");
-            if (tcpNoDelay == 1) {
-                System.out.println("----TCPNoDelay 명령어 확인"+ "reg add \"" + networkPath + "\" /v TCPNoDelay /t REG_QWORD /d 0 /f");
-                executeCommand("reg add \"" + networkPath + "\" /v TCPNoDelay /t REG_QWORD /d 0 /f");
+            if (tcpNoDelay != 1) {
+                executeCommand("reg add \"" + networkPath + "\" /v TCPNoDelay /t REG_QWORD /d 1 /f");
             }
 
             // MSMQ TCPNoDelay 확인
@@ -173,8 +172,5 @@ public class MainService {
         }
         return null; // 찾지 못하면 null 반환
     }
-
-
-
 
 }
