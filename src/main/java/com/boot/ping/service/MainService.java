@@ -56,33 +56,37 @@ public class MainService {
     public void runOptimization() {
         try {
             String networkInterfaceGUID = getNetworkInterfaceGUID();
-
-            if (null == networkInterfaceGUID || networkInterfaceGUID.isEmpty()) {
+            if (networkInterfaceGUID == null || networkInterfaceGUID.isEmpty()) {
                 showAlert("오류", "네트워크 인터페이스 GUID를 찾을 수 없습니다.");
+                return;
             }
             String networkPath = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" + networkInterfaceGUID;
 
             // TCPAckFrequency 확인
-            int tcpAckFrequency = checkRegistryValue(networkPath, "TcpAckFrequency");
-            if (tcpAckFrequency != 1) {
+            long tcpAckFrequency = checkRegistryValue(networkPath, "TcpAckFrequency");
+            System.out.println("TcpAckFrequency: " + tcpAckFrequency);
+            if (tcpAckFrequency != 1L) {
                 executeCommand("reg add \"" + networkPath + "\" /v TcpAckFrequency /t REG_QWORD /d 1 /f");
             }
 
             // TCPNoDelay 확인
-            int tcpNoDelay = checkRegistryValue(networkPath, "TCPNoDelay");
-            if (tcpNoDelay != 1) {
+            long tcpNoDelay = checkRegistryValue(networkPath, "TCPNoDelay");
+            System.out.println("TCPNoDelay: " + tcpNoDelay);
+            if (tcpNoDelay != 1L) {
                 executeCommand("reg add \"" + networkPath + "\" /v TCPNoDelay /t REG_QWORD /d 1 /f");
             }
 
             // MSMQ TCPNoDelay 확인
-            int msmqTcpNoDelay = checkRegistryValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\MSMQ\\Parameters", "TCPNoDelay");
-            if (msmqTcpNoDelay != 1) {
+            long msmqTcpNoDelay = checkRegistryValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\MSMQ\\Parameters", "TCPNoDelay");
+            System.out.println("MSMQ TCPNoDelay: " + msmqTcpNoDelay);
+            if (msmqTcpNoDelay != 1L) {
                 executeCommand("reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\MSMQ\\Parameters\" /v TCPNoDelay /t REG_QWORD /d 1 /f");
             }
 
             // NetworkThrottlingIndex 확인
-            int networkThrottlingIndex = checkRegistryValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "NetworkThrottlingIndex");
-            if (networkThrottlingIndex != 0xFFFFFFFF) {
+            long networkThrottlingIndex = checkRegistryValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "NetworkThrottlingIndex");
+            System.out.println("NetworkThrottlingIndex: " + networkThrottlingIndex);
+            if (networkThrottlingIndex != 0xFFFFFFFFL) { // long 리터럴로 비교
                 executeCommand("reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\" /v NetworkThrottlingIndex /t REG_DWORD /d 0xFFFFFFFF /f");
             }
 
@@ -90,7 +94,6 @@ public class MainService {
         } catch (Exception ex) {
             showAlert("오류 발생", "네트워크 최적화 실행 중 오류가 발생했습니다.\n" + ex.getMessage());
         }
-
     }
 
     private void executeCommand(String command) throws IOException, InterruptedException {
@@ -115,29 +118,38 @@ public class MainService {
         alert.showAndWait();
     }
 
-    public int checkRegistryValue(String path, String key) {
+    public long checkRegistryValue(String path, String key) {
         try {
-
-            ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "reg query " + path + " /v " + key);
+            ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "reg query \"" + path + "\" /v " + key);
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.contains(key)) {
-                    String[] parts = line.trim().split("\\s+"); // 공백을 기준으로 분할
+                System.out.println("레지스트리 출력: " + line);
+                if (line.contains(key) && (line.contains("REG_DWORD") || line.contains("REG_QWORD"))) {
+                    String[] parts = line.trim().split("\\s+");
                     if (parts.length >= 3) {
-                        String hexValue = parts[parts.length - 1].replace("0x", ""); // "0x" 제거
-                        return Integer.parseInt(hexValue, 16); // 16진수 값 변환
+                        String hexValue = parts[parts.length - 1];
+                        System.out.println("파싱할 값: " + hexValue);
+                        if (hexValue.startsWith("0x")) {
+                            return Long.parseLong(hexValue.replace("0x", ""), 16); // Long으로 파싱
+                        } else {
+                            return Long.parseLong(hexValue); // 10진수 처리
+                        }
                     }
                 }
             }
-            process.waitFor();
+            int exitCode = process.waitFor();
+            System.out.println("명령어 종료 코드: " + exitCode);
+            System.out.println("키를 찾지 못함: " + key);
+            return -1L; // 키 없음 또는 파싱 실패
         } catch (Exception e) {
+            System.err.println("레지스트리 조회 오류: " + e.getMessage());
             e.printStackTrace();
+            return -1L;
         }
-        return -1;
     }
 
     public String getNetworkInterfaceGUID() {

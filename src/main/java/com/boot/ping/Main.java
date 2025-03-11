@@ -32,6 +32,8 @@ public class Main extends Application {
 
         stage.setTitle("Boot Ping");
         stage.setScene(scene);
+        stage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/com/boot/ping/bootping_logo.png")));
+        stage.setResizable(false);
         stage.show();
 
     }
