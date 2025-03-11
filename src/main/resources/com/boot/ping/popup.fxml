@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+
+<VBox alignment="CENTER" prefHeight="76.0" prefWidth="160.0" spacing="10" stylesheets="@popup.css"
+      xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8"
+      fx:controller="com.boot.ping.controller.PopupController">
+    <Label fx:id="responseLabel" text="Waiting for response..."/>
+    <Button onAction="#closePopup" text="Close"/>
+</VBox>

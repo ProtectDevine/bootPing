@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="386.0" prefWidth="364.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="com.boot.ping.MainController">
+<AnchorPane prefHeight="386.0" prefWidth="364.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.boot.ping.controller.MainController">
    <children>
        <Label fx:id="label" layoutX="100" layoutY="100" />
-       <Button fx:id="pingCheck" layoutX="29.0" layoutY="48.0" onAction="#pingCheck" text="Ping 체크" />
+       <Button fx:id="pingCheck" layoutX="29.0" layoutY="48.0" onAction="#pingCheck" prefHeight="23.0" prefWidth="78.0" text="Ping 체크" />
+      <ImageView fitHeight="79.0" fitWidth="103.0" layoutX="281.0" layoutY="9.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="/com/boot/ping/bootping_logo.png" />
+         </image>
+      </ImageView>
+      <Button layoutX="29.0" layoutY="96.0" mnemonicParsing="false" text="Boost Ping" onAction="#pingBoost" />
    </children>
 </AnchorPane>
