@@ -1,6 +1,7 @@
 package com.boot.ping.service;
 
 import com.boot.ping.MainResponseDto;
+import com.boot.ping.enums.AlertCodes;
 import javafx.scene.control.Alert;
 
 import java.io.BufferedReader;
@@ -9,45 +10,38 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.LongStream;
 
 public class MainService {
 
     public MainResponseDto.PingDto getPingMessage() throws IOException {
 
         InetAddress target = InetAddress.getByName("www.google.com");
-        boolean isConnect = target.isReachable(1000);
-        List<Long> startPings = new ArrayList<>();
-        List<Long> endPings = new ArrayList<>();
-        String responseMessage = "";
+        boolean isConnect = target.isReachable(1000); // 초기 연결 확인
+        List<Long> pingTimes = new ArrayList<>();
+        String responseMessage;
 
         if (isConnect) {
-
-            int i;
-            for (i = 0; i <= 5; i++) {
-                Long startPing = System.nanoTime();
-                boolean reConnect = target.isReachable(1000);
-                Long endPing = System.nanoTime();
-                startPings.add(startPing);
-                endPings.add(endPing);
+            for (int i = 0; i < 3; i++) {
+                long startPing = System.nanoTime();
+                target.isReachable(1000);
+                long endPing = System.nanoTime();
+                pingTimes.add(endPing - startPing); // 나노초 단위로 저장
             }
 
-            List<Long> averagePings =
-                    LongStream.range(0, endPings.size())
-                            .mapToObj(k -> endPings.get((int) k) - startPings.get((int) k))
-                            .toList();
+            // 평균 계산 (나노초 -> 밀리초로 변환)
+            long averageNs = (long) pingTimes.stream()
+                    .mapToLong(Long::longValue)
+                    .average()
+                    .orElse(0L);
+            long averageMs = averageNs / 1_000_000;
 
-            Long average = (long) averagePings.stream().mapToLong(Long::longValue).average().orElse(0);
-
-            responseMessage = average / 1_000_000 + "평균 ms";
-
+            // 소수점 2자리까지 포맷팅
+            responseMessage = String.format("%d 평균 ms", averageMs);
         } else {
-
-            responseMessage = "connection lost";
-
+            responseMessage = AlertCodes.alertDisplay(AlertCodes.PING_CHECK_FAIL);
         }
 
-        return  MainResponseDto.PingDto.builder()
+        return MainResponseDto.PingDto.builder()
                 .responsePing(responseMessage)
                 .build();
     }
@@ -56,8 +50,8 @@ public class MainService {
     public void runOptimization() {
         try {
             String networkInterfaceGUID = getNetworkInterfaceGUID();
-            if (networkInterfaceGUID == null || networkInterfaceGUID.isEmpty()) {
-                showAlert("오류", "네트워크 인터페이스 GUID를 찾을 수 없습니다.");
+            if ("".equals(networkInterfaceGUID) || networkInterfaceGUID.isEmpty()) {
+                AlertCodes.alertDisplay(AlertCodes.GUID_CHECK_FAIL);
                 return;
             }
             String networkPath = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" + networkInterfaceGUID;
@@ -90,9 +84,12 @@ public class MainService {
                 executeCommand("reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\" /v NetworkThrottlingIndex /t REG_DWORD /d 0xFFFFFFFF /f");
             }
 
-            showAlert("완료", "네트워크 최적화 설정이 완료되었습니다.");
+            AlertCodes.alertDisplay(AlertCodes.BOOST_PING_COMPLETE);
+
         } catch (Exception ex) {
-            showAlert("오류 발생", "네트워크 최적화 실행 중 오류가 발생했습니다.\n" + ex.getMessage());
+
+            AlertCodes.alertDisplay(AlertCodes.BOOST_PING_FAIL, ex.getMessage());
+
         }
     }
 

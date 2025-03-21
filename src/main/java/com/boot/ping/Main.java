@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.BufferedReader;
@@ -19,12 +20,14 @@ public class Main extends Application {
     }
 
     @Override
-    public void init() throws Exception {
-        checkAndRunAsAdmin();
-    }
-
-    @Override
     public void start(Stage stage) throws Exception {
+
+        // debug 시 if문 주석
+        if (!isRunningAsAdmin()) {
+            tryRunAsAdmin(stage);
+            return; // 재실행 시도 후 현재 프로세스 종료 안 함
+        }
+
         Parent root = FXMLLoader.load(getClass().getResource("scene.fxml"));
 
         Scene scene = new Scene(root);
@@ -38,40 +41,98 @@ public class Main extends Application {
 
     }
 
-    private void checkAndRunAsAdmin() {
-        String os = System.getProperty("os.name").toLowerCase();
-
-        // Windows 운영체제인지 확인
-        if (!os.contains("win")) {
-            return;
-        }
-
-        // 관리자 권한이 있는지 확인
+    private boolean isRunningAsAdmin() {
         try {
-            // 실제 JAR 파일 경로 (빌드 도구에 따라 확인 필요)
-            String jarPath = "C:\\workspace\\ping\\build\\libs\\ping-1.0-SNAPSHOT.jar"; // 예시 경로
-            // PowerShell 명령어 구성
-            String command = "powershell -Command \"Start-Process java -ArgumentList '-jar \\\"" + jarPath + "\\\"' -Verb RunAs\"";
-            System.out.println("실행 명령어: " + command);
-
-            // 명령어 실행
-            ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", command);
-            builder.redirectErrorStream(true);
+            ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "net session >nul 2>&1");
             Process process = builder.start();
-
-            // 출력 확인
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
-
-            process.waitFor();
+            int exitCode = process.waitFor();
+            return exitCode == 0;
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            System.err.println("관리자 권한 체크 실패: " + e.getMessage());
+            return false;
         }
     }
 
+    private void tryRunAsAdmin(Stage stage) {
+        try {
+            File currentFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            String appPath = currentFile.getAbsolutePath();
+            System.out.println("현재 실행 파일 경로: " + appPath);
 
+            String command;
+            if (appPath.endsWith(".jar")) {
+                System.out.println("JAR 환경 감지");
+                if (!new File(appPath).exists()) {
+                    System.out.println("JAR 파일이 존재하지 않습니다: " + appPath);
+                    appPath = new File("build/libs/ping-1.0-SNAPSHOT.jar").getAbsolutePath();
+                }
+                if (!new File(appPath).exists()) {
+                    System.out.println("기본 JAR 파일도 존재하지 않습니다: " + appPath);
+                    showBasicUI(stage);
+                    return;
+                }
+                //배포
+//                String javaCmd = "java --module-path \".\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+                //로컬
+                String javaCmd = "java --module-path \"C:\\javafx-sdk-17.0.14\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+                command = "powershell -Command \"Start-Process cmd -ArgumentList '/c " + javaCmd + "' -Verb RunAs -WindowStyle Hidden\"";
+                System.out.println("JAR 실행 명령어: " + command);
+            } else if (appPath.endsWith(".exe")) {
+                System.out.println("EXE 환경 감지");
+                String exePath = System.getProperty("user.dir") + File.separator + "BootPing.exe";
+                if (!new File(exePath).exists()) {
+                    System.out.println("EXE 파일이 존재하지 않습니다: " + exePath);
+                    showBasicUI(stage);
+                    return;
+                }
+                command = "powershell -Command \"Start-Process \\\"" + exePath + "\\\" -Verb RunAs -WindowStyle Hidden\"";
+                System.out.println("EXE 실행 명령어: " + command);
+            } else {
+                System.out.println("IDE 클래스 환경 감지");
+                appPath = new File("build/libs/ping-1.0-SNAPSHOT.jar").getAbsolutePath();
+                if (!new File(appPath).exists()) {
+                    System.out.println("JAR 파일이 존재하지 않습니다: " + appPath);
+                    showBasicUI(stage);
+                    return;
+                }
+                //배포
+//                String javaCmd = "java --module-path \".\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+                //로컬
+                String javaCmd = "java --module-path \"C:\\javafx-sdk-17.0.14\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+                command = "powershell -Command \"Start-Process cmd -ArgumentList '/c " + javaCmd + "' -Verb RunAs -WindowStyle Hidden\"";
+                System.out.println("JAR 실행 명령어: " + command);
+            }
+
+            executeCommand(command);
+            stage.close();
+            System.exit(0);
+        } catch (Exception e) {
+            System.err.println("재실행 실패: " + e.getMessage());
+            e.printStackTrace();
+            showBasicUI(stage);
+        }
+    }
+
+    private void executeCommand(String command) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", command);
+        builder.redirectErrorStream(true);
+        Process process = builder.start();
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "MS949"));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            System.out.println("출력: " + line);
+        }
+        int exitCode = process.waitFor();
+        System.out.println("명령어 종료 코드: " + exitCode);
+    }
+
+    private void showBasicUI(Stage stage) {
+        StackPane root = new StackPane();
+        Scene scene = new Scene(root, 300, 250);
+        stage.setTitle("Ping App (관리자 권한 필요)");
+        stage.setScene(scene);
+        stage.show();
+    }
 
 }

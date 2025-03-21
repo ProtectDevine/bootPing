@@ -2,7 +2,6 @@ package com.boot.ping.controller;
 
 import com.boot.ping.MainResponseDto;
 import com.boot.ping.service.MainService;
-import com.boot.ping.stage.PopupStage;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -27,13 +26,6 @@ public class MainController {
 //            String javafxVersion = System.getProperty("javafx.version");
             label.setText("Boost Your Ping");
         }
-
-//        @FXML
-//        public void pingCheck() throws IOException {
-//
-//             MainResponseDto.PingDto responseDto = this.mainService.getPingMessage();
-//             label.setText(responseDto.getResponsePing());
-//        }
 
         @FXML
         public void pingCheck() throws IOException {
