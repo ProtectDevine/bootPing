@@ -6,8 +6,6 @@ import javafx.scene.control.Alert;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Arrays;
-
 @Getter
 @RequiredArgsConstructor
 public enum AlertCodes {
@@ -39,14 +37,8 @@ public enum AlertCodes {
 
     public static CodeDto.AlertDto getAlertCodes(AlertCodes alertCodes, String language) {
 
-        LanguageCodes languageCodes =
-                Arrays.stream(LanguageCodes.values())
-                        .filter(x -> language.equals(x.getLanguage()))
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("can't find language"));
-
-        return switch (languageCodes.getLanguage()) {
-            case "ko" -> CodeDto.AlertDto.builder()
+        return switch (LanguageCodes.getLanguageCode(language)) {
+            case KOREAN -> CodeDto.AlertDto.builder()
                     .title(alertCodes.title)
                     .description(alertCodes.description)
                     .build();
