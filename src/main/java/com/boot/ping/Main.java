@@ -72,9 +72,9 @@ public class Main extends Application {
                     return;
                 }
                 //배포
-//                String javaCmd = "java --module-path \".\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+                String javaCmd = ".\\jre\\bin\\java --module-path \".\\jre\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";                //로컬
                 //로컬
-                String javaCmd = "java --module-path \"C:\\javafx-sdk-17.0.14\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+//                String javaCmd = "java --module-path \"C:\\javafx-sdk-17.0.14\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
                 command = "powershell -Command \"Start-Process cmd -ArgumentList '/c " + javaCmd + "' -Verb RunAs -WindowStyle Hidden\"";
                 System.out.println("JAR 실행 명령어: " + command);
             } else if (appPath.endsWith(".exe")) {
@@ -96,9 +96,9 @@ public class Main extends Application {
                     return;
                 }
                 //배포
-//                String javaCmd = "java --module-path \".\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+                String javaCmd = ".\\jre\\bin\\java --module-path \".\\jre\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
                 //로컬
-                String javaCmd = "java --module-path \"C:\\javafx-sdk-17.0.14\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
+//                String javaCmd = "java --module-path \"C:\\javafx-sdk-17.0.14\\lib\" --add-modules javafx.controls,javafx.fxml -jar \"" + appPath + "\"";
                 command = "powershell -Command \"Start-Process cmd -ArgumentList '/c " + javaCmd + "' -Verb RunAs -WindowStyle Hidden\"";
                 System.out.println("JAR 실행 명령어: " + command);
             }
