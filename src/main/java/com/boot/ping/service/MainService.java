@@ -1,8 +1,10 @@
 package com.boot.ping.service;
 
 import com.boot.ping.MainResponseDto;
+import com.boot.ping.dto.RegistryCommandDto;
 import com.boot.ping.enums.AlertCodes;
-import javafx.scene.control.Alert;
+import com.boot.ping.strategy.OptimizationStrategy;
+import com.boot.ping.strategy.RegistryStrategy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,6 +14,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainService {
+
+    private final WinRegistryService winRegistryService = new WinRegistryService();
+    private List<OptimizationStrategy> strategies = new ArrayList<>();
+
+    public MainService() {
+        this.strategies = List.of(
+                new RegistryStrategy.TcpAckFrequencyStrategy(),
+                new RegistryStrategy.TcpNoDelayStrategy(),
+                new RegistryStrategy.MsmqTcpNoDelayStrategy(),
+                new RegistryStrategy.NetworkThrottlingStrategy()
+        );
+    }
 
     public MainResponseDto.PingDto getPingMessage() throws IOException {
 
@@ -46,77 +60,70 @@ public class MainService {
                 .build();
     }
 
+    public boolean runOptimization(String guid, boolean hasTcpNoDelay) {
 
-    public void runOptimization() {
         try {
-            String networkInterfaceGUID = getNetworkInterfaceGUID();
-            if ("".equals(networkInterfaceGUID) || networkInterfaceGUID.isEmpty()) {
-                AlertCodes.alertDisplay(AlertCodes.GUID_CHECK_FAIL);
-                return;
-            }
-            String networkPath = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" + networkInterfaceGUID;
+            String networkPath = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" + guid;
 
-            // TCPAckFrequency 확인
-            long tcpAckFrequency = checkRegistryValue(networkPath, "TcpAckFrequency");
-            System.out.println("TcpAckFrequency: " + tcpAckFrequency);
-            if (tcpAckFrequency != 1L) {
-                executeCommand("reg add \"" + networkPath + "\" /v TcpAckFrequency /t REG_QWORD /d 1 /f");
-            }
+            if (hasTcpNoDelay) {
+                applyInitialSettings(networkPath);
+                AlertCodes.alertDisplay(AlertCodes.RESET_BOOST_COMPLETE);
 
-            // TCPNoDelay 확인
-            long tcpNoDelay = checkRegistryValue(networkPath, "TCPNoDelay");
-            System.out.println("TCPNoDelay: " + tcpNoDelay);
-            if (tcpNoDelay != 1L) {
-                executeCommand("reg add \"" + networkPath + "\" /v TCPNoDelay /t REG_QWORD /d 1 /f");
+            } else {
+                for (OptimizationStrategy strategy : strategies) {
+                    strategy.apply(winRegistryService, networkPath);
+                }
+                AlertCodes.alertDisplay(AlertCodes.BOOST_PING_COMPLETE);
             }
-
-            // MSMQ TCPNoDelay 확인
-            long msmqTcpNoDelay = checkRegistryValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\MSMQ\\Parameters", "TCPNoDelay");
-            System.out.println("MSMQ TCPNoDelay: " + msmqTcpNoDelay);
-            if (msmqTcpNoDelay != 1L) {
-                executeCommand("reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\MSMQ\\Parameters\" /v TCPNoDelay /t REG_QWORD /d 1 /f");
-            }
-
-            // NetworkThrottlingIndex 확인
-            long networkThrottlingIndex = checkRegistryValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "NetworkThrottlingIndex");
-            System.out.println("NetworkThrottlingIndex: " + networkThrottlingIndex);
-            if (networkThrottlingIndex != 0xFFFFFFFFL) { // long 리터럴로 비교
-                executeCommand("reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\" /v NetworkThrottlingIndex /t REG_DWORD /d 0xFFFFFFFF /f");
-            }
-
-            AlertCodes.alertDisplay(AlertCodes.BOOST_PING_COMPLETE);
 
         } catch (Exception ex) {
-
-            AlertCodes.alertDisplay(AlertCodes.BOOST_PING_FAIL, ex.getMessage());
-
-        }
-    }
-
-    private void executeCommand(String command) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", command);
-        builder.redirectErrorStream(true);
-        Process process = builder.start();
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            System.out.println(line);
+            AlertCodes.alertDisplay(AlertCodes.RESET_BOOST_FAIL, ex.getMessage());
         }
 
-        process.waitFor();
+        return !hasTcpNoDelay;
+
     }
 
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    private void applyInitialSettings(String networkPath) throws IOException, InterruptedException {
+
+        try {
+
+            winRegistryService.executeCommand(RegistryCommandDto.builder()
+                    .path(networkPath)
+                    .valueName("TcpAckFrequency")
+                    .data(0L)
+                    .build());
+            System.out.println("TcpAckFrequency 설정 완료");
+            winRegistryService.executeCommand(RegistryCommandDto.builder()
+                    .path(networkPath)
+                    .valueName("TCPNoDelay")
+                    .data(0L)
+                    .build());
+            System.out.println("TCPNoDelay 설정 완료");
+            winRegistryService.executeCommand(RegistryCommandDto.builder()
+                    .path("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\MSMQ\\Parameters")
+                    .valueName("TCPNoDelay")
+                    .data(0L)
+                    .build());
+            System.out.println("MSMQ TCPNoDelay 설정 완료");
+            winRegistryService.executeCommand(RegistryCommandDto.builder()
+                    .path("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile")
+                    .valueName("NetworkThrottlingIndex")
+                    .type("REG_DWORD")
+                    .data(0x00000000L)
+                    .build());
+            System.out.println("NetworkThrottlingIndex 설정 완료");
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
     }
 
     public long checkRegistryValue(String path, String key) {
+
         try {
+
             ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "reg query \"" + path + "\" /v " + key);
             builder.redirectErrorStream(true);
             Process process = builder.start();
@@ -131,7 +138,7 @@ public class MainService {
                         String hexValue = parts[parts.length - 1];
                         System.out.println("파싱할 값: " + hexValue);
                         if (hexValue.startsWith("0x")) {
-                            return Long.parseLong(hexValue.replace("0x", ""), 16); // Long으로 파싱
+                            return Long.parseLong(hexValue.replace("0x", ""), 16);
                         } else {
                             return Long.parseLong(hexValue); // 10진수 처리
                         }
@@ -147,14 +154,16 @@ public class MainService {
             e.printStackTrace();
             return -1L;
         }
+
     }
 
     public String getNetworkInterfaceGUID() {
+
         try {
+
             // 현재 IP 주소 가져오기
             InetAddress localHost = InetAddress.getLocalHost();
             String currentIP = localHost.getHostAddress();
-            System.out.println("현재 IP 주소: " + currentIP);
 
             // 레지스트리에서 인터페이스 목록 확인
             ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "reg query HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces /s");
@@ -169,17 +178,40 @@ public class MainService {
                 if (line.startsWith("HKEY_LOCAL_MACHINE")) {
                     currentGUID = line.substring(line.lastIndexOf("\\") + 1);
                 }
-                if (line.contains("DhcpIPAddress") || line.contains("IPAddress")) { // 둘 다 확인
+                if (line.contains("DhcpIPAddress") || line.contains("IPAddress")) {
                     if (line.contains(currentIP)) {
                         return currentGUID; // 현재 IP와 일치하는 GUID 반환
                     }
                 }
             }
             process.waitFor();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null; // 찾지 못하면 null 반환
+
+        return null;
+
+    }
+
+    public String getGUID() {
+
+        String networkInterfaceGUID = getNetworkInterfaceGUID();
+        if ("".equals(networkInterfaceGUID) || networkInterfaceGUID.isEmpty()) {
+            AlertCodes.alertDisplay(AlertCodes.GUID_CHECK_FAIL);
+        }
+        return networkInterfaceGUID;
+
+    }
+
+    public boolean checkTcpNoDelay(String guid) {
+
+        String networkPath = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" + guid;
+
+        long tcpNoDelay = checkRegistryValue(networkPath, "TCPNoDelay");
+        System.out.println("tcpNoDelay: " + tcpNoDelay);
+
+        return tcpNoDelay != 0L;
     }
 
 }

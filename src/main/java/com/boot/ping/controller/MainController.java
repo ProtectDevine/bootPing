@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -21,10 +22,31 @@ public class MainController {
         @FXML
         private Label label;
 
+        @FXML
+        private Button boostButton;
+
+        private String guid;
+
         public void initialize() {
-//            String javaVersion = System.getProperty("java.version");
-//            String javafxVersion = System.getProperty("javafx.version");
-            label.setText("Boost Your Ping");
+
+            this.label.setText("Boost Your Ping");
+
+            this.guid = this.mainService.getGUID();
+
+            boolean hasTcpNoDelay = this.mainService.checkTcpNoDelay(this.guid);
+
+            boostButtonText(hasTcpNoDelay);
+
+        }
+
+        @FXML
+        public void pingBoost() throws InvocationTargetException, IllegalAccessException {
+
+            boolean hasTcpNoDelay = (boolean) this.boostButton.getUserData();
+            boolean completedOptimization = this.mainService.runOptimization(this.guid, hasTcpNoDelay);
+
+            boostButtonText(completedOptimization);
+
         }
 
         @FXML
@@ -49,14 +71,16 @@ public class MainController {
             popupStage.showAndWait();
         }
 
-        @FXML
-        public void pingBoost() throws InvocationTargetException, IllegalAccessException {
+        public void boostButtonText(boolean hasTcpNoDelay) {
 
+            this.boostButton.setUserData(hasTcpNoDelay);
+            this.boostButton.setText("Boost Status : " + hasTcpNoDelay);
 
-//            this.mainService.getNetworkInterfaceGUID();
-            this.mainService.runOptimization();
-
-
+            if (hasTcpNoDelay) {
+                boostButton.setStyle("-fx-text-fill: green;");
+            } else {
+                boostButton.setStyle("-fx-text-fill: red;");
+            }
 
         }
 

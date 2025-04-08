@@ -12,7 +12,7 @@ public enum AlertCodes {
 
     PING_CHECK_FAIL(
             "오류 발생", "네트워크 연결을 찾지 못했습니다.",
-    "ERROR", "Network connection not found."),
+            "ERROR", "Network connection not found."),
 
 
     GUID_CHECK_FAIL(
@@ -20,9 +20,19 @@ public enum AlertCodes {
             "ERROR", "GUID not found."),
 
 
+    RESET_BOOST_COMPLETE(
+            "완료", "네트워크 최적화 설정을 초기화하였습니다.",
+            "COMPLETE", "Completed initializing network optimization settings."
+
+    ),
+    RESET_BOOST_FAIL(
+            "오류 발생", "네트워크 최적화 설정 초기화 중 오류가 발생했습니다.",
+            "ERROR", "Error occurred during initialization of network optimization settings."
+
+    ),
     BOOST_PING_COMPLETE(
             "완료", "네트워크 최적화 설정이 완료되었습니다.",
-            "COMPLETE", "Network optimization settings are complete."
+            "COMPLETE", "Complete network optimization settings."
             ),
     BOOST_PING_FAIL(
             "오류 발생", "네트워크 최적화 실행 중 오류가 발생했습니다.",
@@ -44,7 +54,7 @@ public enum AlertCodes {
                     .build();
             default -> CodeDto.AlertDto.builder()
                     .title(alertCodes.titleEn)
-                    .description(alertCodes.getDescriptionEn())
+                    .description(alertCodes.descriptionEn)
                     .build();
         };
 
