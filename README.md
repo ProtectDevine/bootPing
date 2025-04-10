@@ -7,7 +7,6 @@
 - KOREAN
 
 # Develop Enviroment
-- java 17
 - jre 17
 - javafx-sdk-17.0.14
 
@@ -15,3 +14,6 @@
 ```
 --module-path your\javafx-sdk-path\lib --add-modules javafx.controls,javafx.fxml
 ```
+
+# Program Download
+https://velog.io/@skh3235/BootPing-v1.01-%EB%B0%B0%ED%8F%AC-%EB%B0%8F-%EC%95%88%EB%82%B4
