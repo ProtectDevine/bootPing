@@ -13,8 +13,9 @@
             <Image url="/com/boot/ping/bootping_logo.png" />
          </image>
       </ImageView>
-      <Button fx:id="boostButton" layoutX="29.0" layoutY="84.0" mnemonicParsing="false" onAction="#pingBoost"
-              minWidth="120.0" maxWidth="200.0" minHeight="29.0" maxHeight="100.0"
-              style="-fx-padding: 7; -fx-border-radius: 5;" text="Boost Ping" wrapText="true" />
+      <Button fx:id="boostButton" layoutX="29.0" layoutY="84.0" maxHeight="100.0" maxWidth="200.0" minHeight="29.0" minWidth="120.0" mnemonicParsing="false"
+              onAction="#pingBoost" style="-fx-padding: 7; -fx-border-radius: 5;" text="Boost Ping" wrapText="true" />
+      <Button layoutX="29.0" layoutY="128.0" maxHeight="100.0" maxWidth="200.0" minHeight="29.0" minWidth="120.0" mnemonicParsing="false"
+              onAction="#getTasks" style="-fx-padding: 7; -fx-border-radius: 5;" text="Task Kill" wrapText="true" />
    </children>
 </AnchorPane>

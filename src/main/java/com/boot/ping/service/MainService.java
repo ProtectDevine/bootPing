@@ -2,7 +2,9 @@ package com.boot.ping.service;
 
 import com.boot.ping.MainResponseDto;
 import com.boot.ping.dto.RegistryCommandDto;
+import com.boot.ping.dto.TaskDto;
 import com.boot.ping.enums.AlertCodes;
+import com.boot.ping.enums.TaskWhiteList;
 import com.boot.ping.strategy.OptimizationStrategy;
 import com.boot.ping.strategy.RegistryStrategy;
 
@@ -11,7 +13,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainService {
 
@@ -212,6 +217,99 @@ public class MainService {
         System.out.println("tcpNoDelay: " + tcpNoDelay);
 
         return tcpNoDelay != 0L;
+    }
+
+    public List<TaskDto> getTasks() throws IOException {
+        List<TaskDto> tasks = new ArrayList<>();
+        Process process = Runtime.getRuntime().exec("tasklist");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "MS949"));
+        String line;
+
+        for (int i = 0; i < 3; i++) {
+            reader.readLine();
+        }
+
+        while ((line = reader.readLine()) != null) {
+            if (line.trim().isEmpty()) continue;
+
+            // 디버깅용: 전체 줄 출력
+            System.out.println("원본 줄: " + line);
+
+            String[] parts = line.split("\\s+", 5);
+            if (parts.length < 5) {
+                System.err.println("파싱 실패 (열 부족): " + line);
+                continue;
+            }
+
+            // 디버깅용: parts 배열 출력
+            System.out.println("파싱 결과: " + Arrays.toString(parts));
+
+            try {
+                String name = parts[0];
+                int pid = parts[1].matches("\\d+") ? Integer.parseInt(parts[1]) : -1;
+                String sessionName = parts[2];
+                int sessionNumber = parts[3].matches("\\d+") ? Integer.parseInt(parts[3]) : -1;
+                String memoryUsageStr = parts[4];
+
+                Long memoryUsage = parseMemoryUsage(memoryUsageStr);
+
+                TaskDto processInfo = new TaskDto(name, pid, sessionName, sessionNumber, memoryUsage);
+                tasks.add(processInfo);
+            } catch (Exception e) {
+                System.err.println("파싱 중 오류: " + line + " | 오류: " + e.getMessage());
+                AlertCodes.alertDisplay(AlertCodes.GET_TASKS_FAIL);
+            }
+        }
+        reader.close();
+
+        tasks = TaskWhiteList.filterTasks(tasks);
+
+        return tasks.stream()
+                .sorted(Comparator.comparing(TaskDto::getMemoryUsage, Comparator.reverseOrder()))
+                .collect(Collectors.toList());
+    }
+
+    private static Long parseMemoryUsage(String memoryUsageStr) {
+        try {
+            String cleanStr = memoryUsageStr.replace(",", "").trim();
+            String[] parts = cleanStr.split("\\s+");
+
+            // 숫자가 포함된 마지막 부분을 찾음
+            String numberPart = null;
+            for (int i = parts.length - 1; i >= 0; i--) {
+                if (parts[i].matches("\\d+")) { // 숫자인지 확인
+                    numberPart = parts[i];
+                    break;
+                }
+            }
+
+            if (numberPart == null) {
+                throw new IllegalArgumentException("숫자 부분이 없음");
+            }
+
+            long value = Long.parseLong(numberPart);
+
+            // 단위가 있으면 적용
+            if (parts.length > 1) {
+                String lastPart = parts[parts.length - 1].toUpperCase();
+                if (!lastPart.matches("\\d+")) { // 마지막이 숫자가 아니면 단위로 간주
+                    switch (lastPart) {
+                        case "K":
+                            return value * 1024L;
+                        case "M":
+                            return value * 1024L * 1024L;
+                        case "G":
+                            return value * 1024L * 1024L * 1024L;
+                        default:
+                            return value; // 알 수 없는 단위는 바이트로 간주
+                    }
+                }
+            }
+            return value; // 단위 없으면 바이트 단위로 간주
+        } catch (Exception e) {
+            System.err.println("메모리 사용량 파싱 실패 - 입력: " + memoryUsageStr + " | 오류: " + e.getMessage());
+            return 0L;
+        }
     }
 
 }

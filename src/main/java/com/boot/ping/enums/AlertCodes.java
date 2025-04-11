@@ -37,6 +37,12 @@ public enum AlertCodes {
     BOOST_PING_FAIL(
             "오류 발생", "네트워크 최적화 실행 중 오류가 발생했습니다.",
             "ERROR", "Error running network optimization."
+    ),
+
+
+    GET_TASKS_FAIL(
+            "오류 발생", "프로세스 리스트를 불러오는 중 오류가 발생했습니다.",
+            "ERROR", "Error loading process list."
     )
     ;
 
