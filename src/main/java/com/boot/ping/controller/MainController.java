@@ -1,6 +1,7 @@
 package com.boot.ping.controller;
 
 import com.boot.ping.MainResponseDto;
+import com.boot.ping.dto.TaskDto;
 import com.boot.ping.service.MainService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -8,12 +9,17 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 public class MainController {
 
@@ -84,6 +90,35 @@ public class MainController {
 
         }
 
+        @FXML
+        public void getTasks() throws IOException {
+            TableView<TaskDto> table = new TableView<>();
+            List<TaskDto> tasks = this.mainService.getTasks();
+
+            TableColumn<TaskDto, String> imageNameCol = new TableColumn<>("이미지 이름");
+            imageNameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+            TableColumn<TaskDto, Integer> pidCol = new TableColumn<>("PID");
+            pidCol.setCellValueFactory(new PropertyValueFactory<>("pid"));
+
+            TableColumn<TaskDto, String> sessionNameCol = new TableColumn<>("세션 이름");
+            sessionNameCol.setCellValueFactory(new PropertyValueFactory<>("sessionName"));
+
+            TableColumn<TaskDto, Integer> sessionNumberCol = new TableColumn<>("세션 번호");
+            sessionNumberCol.setCellValueFactory(new PropertyValueFactory<>("sessionNumber"));
+
+            TableColumn<TaskDto, Long> memoryUsageCol = new TableColumn<>("메모리 사용량");
+            memoryUsageCol.setCellValueFactory(new PropertyValueFactory<>("memoryUsage"));
+
+            table.getColumns().addAll(imageNameCol, pidCol, sessionNameCol, sessionNumberCol, memoryUsageCol);
+            table.getItems().addAll(tasks);
+
+            VBox root = new VBox(table);
+            Scene scene = new Scene(root, 640, 480);
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            stage.show();
+        }
 
 
 
