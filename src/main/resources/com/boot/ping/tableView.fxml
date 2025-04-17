@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.boot.ping.controller.TaskController" spacing="10">
+    <TableView fx:id="taskTable">
+        <columns>
+            <TableColumn fx:id="selectedColumn" text="선택" prefWidth="50"/>
+            <TableColumn fx:id="nameColumn" text="이름" prefWidth="200"/>
+            <TableColumn fx:id="pidColumn" text="PID" prefWidth="80"/>
+            <TableColumn fx:id="sessionNameColumn" text="세션 이름" prefWidth="100"/>
+            <TableColumn fx:id="sessionNumberColumn" text="세션 번호" prefWidth="80"/>
+            <TableColumn fx:id="memoryUsageColumn" text="메모리 사용량" prefWidth="120"/>
+        </columns>
+    </TableView>
+    <HBox spacing="10">
+        <Button text="모든 태스크 종료" onAction="#terminateAllTasksAction"/>
+        <Button text="선택한 태스크 종료" onAction="#terminateSelectedTasksAction"/>
+    </HBox>
+</VBox>

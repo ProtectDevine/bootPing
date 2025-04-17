@@ -14,5 +14,13 @@ public class CodeDto {
 
     }
 
+    @Getter
+    @Builder
+    public static class MenuDto {
+        private String menu;
+    }
+
+
+
 
 }

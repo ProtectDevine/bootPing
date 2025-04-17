@@ -1,17 +1,13 @@
 package com.boot.ping.controller;
 
 import com.boot.ping.MainResponseDto;
-import com.boot.ping.dto.TaskDto;
+import com.boot.ping.enums.MenuCodes;
 import com.boot.ping.service.MainService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -19,7 +15,6 @@ import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 public class MainController {
 
@@ -27,9 +22,14 @@ public class MainController {
 
         @FXML
         private Label label;
-
+        @FXML
+        private Button pingCheckButton;
         @FXML
         private Button boostButton;
+        @FXML
+        private Button taskButton;
+
+
 
         private String guid;
 
@@ -39,8 +39,10 @@ public class MainController {
 
             this.guid = this.mainService.getGUID();
 
-            boolean hasTcpNoDelay = this.mainService.checkTcpNoDelay(this.guid);
+            this.pingCheckButton.setText(MenuCodes.menuDisplay(MenuCodes.MAIN_PING_CHECK).getMenu());
+            this.taskButton.setText(MenuCodes.menuDisplay(MenuCodes.MAIN_KILL_TASK).getMenu());
 
+            boolean hasTcpNoDelay = this.mainService.checkTcpNoDelay(this.guid);
             boostButtonText(hasTcpNoDelay);
 
         }
@@ -80,7 +82,7 @@ public class MainController {
         public void boostButtonText(boolean hasTcpNoDelay) {
 
             this.boostButton.setUserData(hasTcpNoDelay);
-            this.boostButton.setText("Boost Status : " + hasTcpNoDelay);
+            this.boostButton.setText(MenuCodes.menuDisplay(MenuCodes.MAIN_PING_BOOST).getMenu() + " : " + hasTcpNoDelay);
 
             if (hasTcpNoDelay) {
                 boostButton.setStyle("-fx-text-fill: green;");
@@ -90,36 +92,26 @@ public class MainController {
 
         }
 
-        @FXML
-        public void getTasks() throws IOException {
-            TableView<TaskDto> table = new TableView<>();
-            List<TaskDto> tasks = this.mainService.getTasks();
+    @FXML
+    public void getTasks() {
+        try {
+            // tableView.fxml 로드
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/boot/ping/tableView.fxml"));
+            VBox root = loader.load();
 
-            TableColumn<TaskDto, String> imageNameCol = new TableColumn<>("이미지 이름");
-            imageNameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-
-            TableColumn<TaskDto, Integer> pidCol = new TableColumn<>("PID");
-            pidCol.setCellValueFactory(new PropertyValueFactory<>("pid"));
-
-            TableColumn<TaskDto, String> sessionNameCol = new TableColumn<>("세션 이름");
-            sessionNameCol.setCellValueFactory(new PropertyValueFactory<>("sessionName"));
-
-            TableColumn<TaskDto, Integer> sessionNumberCol = new TableColumn<>("세션 번호");
-            sessionNumberCol.setCellValueFactory(new PropertyValueFactory<>("sessionNumber"));
-
-            TableColumn<TaskDto, Long> memoryUsageCol = new TableColumn<>("메모리 사용량");
-            memoryUsageCol.setCellValueFactory(new PropertyValueFactory<>("memoryUsage"));
-
-            table.getColumns().addAll(imageNameCol, pidCol, sessionNameCol, sessionNumberCol, memoryUsageCol);
-            table.getItems().addAll(tasks);
-
-            VBox root = new VBox(table);
-            Scene scene = new Scene(root, 640, 480);
+            // 새로운 창 생성
             Stage stage = new Stage();
-            stage.setScene(scene);
+            stage.setTitle("Task Manager");
+            stage.setScene(new Scene(root));
             stage.show();
+        } catch (IOException e) {
+            System.err.println("TableView 창 로드 실패: " + e.getMessage());
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("창 로드 실패");
+            alert.setContentText("태스크 관리 창을 열지 못했습니다: " + e.getMessage());
+            alert.showAndWait();
         }
-
+    }
 
 
 
