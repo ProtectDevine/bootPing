@@ -2,6 +2,7 @@ package com.boot.ping.controller;
 
 import com.boot.ping.MainResponseDto;
 import com.boot.ping.dto.TaskDto;
+import com.boot.ping.enums.MenuCodes;
 import com.boot.ping.service.MainService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -27,9 +28,12 @@ public class MainController {
 
         @FXML
         private Label label;
-
+        @FXML
+        private Button pingCheckButton;
         @FXML
         private Button boostButton;
+        @FXML
+        private Button taskButton;
 
         private String guid;
 
@@ -39,8 +43,10 @@ public class MainController {
 
             this.guid = this.mainService.getGUID();
 
-            boolean hasTcpNoDelay = this.mainService.checkTcpNoDelay(this.guid);
+            this.pingCheckButton.setText(MenuCodes.menuDisplay(MenuCodes.MAIN_PING_CHECK).getMenu());
+            this.taskButton.setText(MenuCodes.menuDisplay(MenuCodes.MAIN_KILL_TASK).getMenu());
 
+            boolean hasTcpNoDelay = this.mainService.checkTcpNoDelay(this.guid);
             boostButtonText(hasTcpNoDelay);
 
         }
@@ -80,7 +86,7 @@ public class MainController {
         public void boostButtonText(boolean hasTcpNoDelay) {
 
             this.boostButton.setUserData(hasTcpNoDelay);
-            this.boostButton.setText("Boost Status : " + hasTcpNoDelay);
+            this.boostButton.setText(MenuCodes.menuDisplay(MenuCodes.MAIN_PING_BOOST).getMenu() + " : " + hasTcpNoDelay);
 
             if (hasTcpNoDelay) {
                 boostButton.setStyle("-fx-text-fill: green;");
@@ -95,19 +101,19 @@ public class MainController {
             TableView<TaskDto> table = new TableView<>();
             List<TaskDto> tasks = this.mainService.getTasks();
 
-            TableColumn<TaskDto, String> imageNameCol = new TableColumn<>("이미지 이름");
+            TableColumn<TaskDto, String> imageNameCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_NAME).getMenu());
             imageNameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-            TableColumn<TaskDto, Integer> pidCol = new TableColumn<>("PID");
+            TableColumn<TaskDto, Integer> pidCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_PID).getMenu());
             pidCol.setCellValueFactory(new PropertyValueFactory<>("pid"));
 
-            TableColumn<TaskDto, String> sessionNameCol = new TableColumn<>("세션 이름");
+            TableColumn<TaskDto, String> sessionNameCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_SESSION_NAME).getMenu());
             sessionNameCol.setCellValueFactory(new PropertyValueFactory<>("sessionName"));
 
-            TableColumn<TaskDto, Integer> sessionNumberCol = new TableColumn<>("세션 번호");
+            TableColumn<TaskDto, Integer> sessionNumberCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_SESSION_NUMBER).getMenu());
             sessionNumberCol.setCellValueFactory(new PropertyValueFactory<>("sessionNumber"));
 
-            TableColumn<TaskDto, Long> memoryUsageCol = new TableColumn<>("메모리 사용량");
+            TableColumn<TaskDto, Long> memoryUsageCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_MEMORY_USAGE).getMenu());
             memoryUsageCol.setCellValueFactory(new PropertyValueFactory<>("memoryUsage"));
 
             table.getColumns().addAll(imageNameCol, pidCol, sessionNameCol, sessionNumberCol, memoryUsageCol);

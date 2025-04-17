@@ -4,9 +4,11 @@ import com.boot.ping.MainResponseDto;
 import com.boot.ping.dto.RegistryCommandDto;
 import com.boot.ping.dto.TaskDto;
 import com.boot.ping.enums.AlertCodes;
+import com.boot.ping.enums.MenuCodes;
 import com.boot.ping.enums.TaskWhiteList;
 import com.boot.ping.strategy.OptimizationStrategy;
 import com.boot.ping.strategy.RegistryStrategy;
+import javafx.beans.property.SimpleBooleanProperty;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -55,7 +57,7 @@ public class MainService {
             long averageMs = averageNs / 1_000_000;
 
             // 소수점 2자리까지 포맷팅
-            responseMessage = String.format("%d 평균 ms", averageMs);
+            responseMessage = String.format(MenuCodes.menuDisplay(MenuCodes.MAIN_AVERAGE_PING).getMenu() + " %d ms", averageMs);
         } else {
             responseMessage = AlertCodes.alertDisplay(AlertCodes.PING_CHECK_FAIL);
         }
@@ -166,11 +168,9 @@ public class MainService {
 
         try {
 
-            // 현재 IP 주소 가져오기
             InetAddress localHost = InetAddress.getLocalHost();
             String currentIP = localHost.getHostAddress();
 
-            // 레지스트리에서 인터페이스 목록 확인
             ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "reg query HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces /s");
             builder.redirectErrorStream(true);
             Process process = builder.start();
@@ -185,7 +185,7 @@ public class MainService {
                 }
                 if (line.contains("DhcpIPAddress") || line.contains("IPAddress")) {
                     if (line.contains(currentIP)) {
-                        return currentGUID; // 현재 IP와 일치하는 GUID 반환
+                        return currentGUID;
                     }
                 }
             }
@@ -253,7 +253,7 @@ public class MainService {
 
                 Long memoryUsage = parseMemoryUsage(memoryUsageStr);
 
-                TaskDto processInfo = new TaskDto(name, pid, sessionName, sessionNumber, memoryUsage);
+                TaskDto processInfo = new TaskDto(name, pid, sessionName, sessionNumber, memoryUsage, new SimpleBooleanProperty(false));
                 tasks.add(processInfo);
             } catch (Exception e) {
                 System.err.println("파싱 중 오류: " + line + " | 오류: " + e.getMessage());
