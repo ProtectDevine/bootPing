@@ -20,7 +20,8 @@ public enum MenuCodes {
     TASK_PID("PID", "PID"),
     TASK_SESSION_NAME("세션 이름", "Session Name"),
     TASK_SESSION_NUMBER("세션 번호", "Session Number"),
-    TASK_MEMORY_USAGE("메모리 사용량", "Memory Usage")
+    TASK_MEMORY_USAGE("메모리 사용량", "Memory Usage"),
+    TASK_SELECT("선택", "select")
     ;
 
 

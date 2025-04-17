@@ -1,18 +1,13 @@
 package com.boot.ping.controller;
 
 import com.boot.ping.MainResponseDto;
-import com.boot.ping.dto.TaskDto;
 import com.boot.ping.enums.MenuCodes;
 import com.boot.ping.service.MainService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -20,7 +15,6 @@ import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 public class MainController {
 
@@ -34,6 +28,8 @@ public class MainController {
         private Button boostButton;
         @FXML
         private Button taskButton;
+
+
 
         private String guid;
 
@@ -96,36 +92,26 @@ public class MainController {
 
         }
 
-        @FXML
-        public void getTasks() throws IOException {
-            TableView<TaskDto> table = new TableView<>();
-            List<TaskDto> tasks = this.mainService.getTasks();
+    @FXML
+    public void getTasks() {
+        try {
+            // tableView.fxml 로드
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/boot/ping/tableView.fxml"));
+            VBox root = loader.load();
 
-            TableColumn<TaskDto, String> imageNameCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_NAME).getMenu());
-            imageNameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-
-            TableColumn<TaskDto, Integer> pidCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_PID).getMenu());
-            pidCol.setCellValueFactory(new PropertyValueFactory<>("pid"));
-
-            TableColumn<TaskDto, String> sessionNameCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_SESSION_NAME).getMenu());
-            sessionNameCol.setCellValueFactory(new PropertyValueFactory<>("sessionName"));
-
-            TableColumn<TaskDto, Integer> sessionNumberCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_SESSION_NUMBER).getMenu());
-            sessionNumberCol.setCellValueFactory(new PropertyValueFactory<>("sessionNumber"));
-
-            TableColumn<TaskDto, Long> memoryUsageCol = new TableColumn<>(MenuCodes.menuDisplay(MenuCodes.TASK_MEMORY_USAGE).getMenu());
-            memoryUsageCol.setCellValueFactory(new PropertyValueFactory<>("memoryUsage"));
-
-            table.getColumns().addAll(imageNameCol, pidCol, sessionNameCol, sessionNumberCol, memoryUsageCol);
-            table.getItems().addAll(tasks);
-
-            VBox root = new VBox(table);
-            Scene scene = new Scene(root, 640, 480);
+            // 새로운 창 생성
             Stage stage = new Stage();
-            stage.setScene(scene);
+            stage.setTitle("Task Manager");
+            stage.setScene(new Scene(root));
             stage.show();
+        } catch (IOException e) {
+            System.err.println("TableView 창 로드 실패: " + e.getMessage());
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("창 로드 실패");
+            alert.setContentText("태스크 관리 창을 열지 못했습니다: " + e.getMessage());
+            alert.showAndWait();
         }
-
+    }
 
 
 

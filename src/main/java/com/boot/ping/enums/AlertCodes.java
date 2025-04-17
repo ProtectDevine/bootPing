@@ -40,10 +40,20 @@ public enum AlertCodes {
     ),
 
 
-    GET_TASKS_FAIL(
+    TASKS_GET_FAIL(
             "오류 발생", "프로세스 리스트를 불러오는 중 오류가 발생했습니다.",
             "ERROR", "Error loading process list."
+    ),
+    TASKS_TERMINATION_WARNING(
+      "선택 없음","종료할 태스크를 선택해주세요.",
+            "Not Selected","Please select the task you want to termination."
+
+    ),
+    TASKS_TERMINATION_CONFIRM(
+            "선택한 태스크 종료", "선택한 태스크를 종료하시겠습니까?",
+            "Termination Selected Tasks", "Are you sure you want to termination the selected task?"
     )
+
     ;
 
     private final String title;
@@ -88,6 +98,21 @@ public enum AlertCodes {
         alert.setContentText(content);
         alert.showAndWait();
     }
+
+    private static void showConfirmAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(content);
+        alert.showAndWait();
+    }
+
+    public static String confirmDisplay(AlertCodes alertCodes) {
+        LocaleUtil localeUtil = new LocaleUtil();
+        CodeDto.AlertDto alert = AlertCodes.getAlertCodes(alertCodes, localeUtil.getUserLocale());
+        showAlert(alert.getTitle(), alert.getDescription());
+        return alert.getDescription();
+    }
+
 
 
 
